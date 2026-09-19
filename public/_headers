@@ -1,0 +1,6 @@
+/*
+  Headers necesarios para SharedArrayBuffer (requerido por ONNX Runtime Web)
+  Estos headers son necesarios para que la transcripción automática funcione correctamente.
+*/
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp

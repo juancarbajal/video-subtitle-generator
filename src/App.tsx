@@ -5,6 +5,7 @@ import VideoPlayer from './components/VideoPlayer';
 import SubtitleEditor from './components/SubtitleEditor';
 import ExportModal from './components/ExportModal';
 import ImportModal from './components/ImportModal';
+import AutoTranscription from './components/AutoTranscription';
 
 export default function App() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -83,24 +84,21 @@ export default function App() {
     setSubtitles((prev) => [...prev, ...importedSubs]);
   };
 
+  // Handle auto-generated subtitles
+  const handleSubtitlesGenerated = (generatedSubs: Subtitle[]) => {
+    setSubtitles((prev) => [...prev, ...generatedSubs]);
+  };
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't handle shortcuts when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
-
-      if (e.key === ' ' || e.code === 'Space') {
-        e.preventDefault();
-        // Toggle play/pause is handled by video player
-      }
-      
       if (e.key === 'n' && e.ctrlKey) {
         e.preventDefault();
         handleAddSubtitle();
       }
-
       if (e.key === 'e' && e.ctrlKey) {
         e.preventDefault();
         setShowExportModal(true);
@@ -126,12 +124,12 @@ export default function App() {
       <header className="bg-gray-900/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 rounded-lg p-2">
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg p-2">
               <i className="fas fa-closed-captioning text-white text-lg"></i>
             </div>
             <div>
               <h1 className="text-lg font-bold text-white">Subtitle Studio</h1>
-              <p className="text-xs text-gray-400">Create & edit video subtitles</p>
+              <p className="text-xs text-gray-400">Subtítulos automáticos con IA</p>
             </div>
           </div>
           
@@ -149,17 +147,17 @@ export default function App() {
               className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-gray-700"
             >
               <i className="fas fa-video"></i>
-              <span className="hidden sm:inline">{videoFile ? videoFile.name : 'Upload Video'}</span>
+              <span className="hidden sm:inline">{videoFile ? videoFile.name : 'Subir Video'}</span>
             </button>
 
             {/* Import subtitles */}
             <button
               onClick={() => setShowImportModal(true)}
               className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 border border-gray-700"
-              title="Import subtitles"
+              title="Importar subtítulos"
             >
               <i className="fas fa-file-import"></i>
-              <span className="hidden sm:inline">Import</span>
+              <span className="hidden sm:inline">Importar</span>
             </button>
 
             {/* Export subtitles */}
@@ -167,10 +165,10 @@ export default function App() {
               onClick={() => setShowExportModal(true)}
               disabled={subtitles.length === 0}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-              title="Export subtitles"
+              title="Exportar subtítulos"
             >
               <i className="fas fa-file-export"></i>
-              <span className="hidden sm:inline">Export</span>
+              <span className="hidden sm:inline">Exportar</span>
             </button>
           </div>
         </div>
@@ -180,7 +178,7 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video section */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-4">
             <VideoPlayer
               videoUrl={videoUrl}
               subtitles={subtitles}
@@ -192,21 +190,27 @@ export default function App() {
               onSeek={handleSeek}
             />
 
+            {/* Auto transcription */}
+            <AutoTranscription
+              videoFile={videoFile}
+              onSubtitlesGenerated={handleSubtitlesGenerated}
+            />
+
             {/* Current time info */}
-            <div className="mt-4 flex items-center justify-between bg-gray-900/50 rounded-lg p-3 border border-gray-800">
+            <div className="flex items-center justify-between bg-gray-900/50 rounded-lg p-3 border border-gray-800">
               <div className="flex items-center gap-4">
                 <div className="text-center">
-                  <p className="text-xs text-gray-500">Current Time</p>
+                  <p className="text-xs text-gray-500">Tiempo Actual</p>
                   <p className="text-sm font-mono text-indigo-400">{formatTime(currentTime)}</p>
                 </div>
                 <div className="w-px h-8 bg-gray-700"></div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-500">Duration</p>
+                  <p className="text-xs text-gray-500">Duración</p>
                   <p className="text-sm font-mono text-gray-300">{formatTime(duration)}</p>
                 </div>
                 <div className="w-px h-8 bg-gray-700"></div>
                 <div className="text-center">
-                  <p className="text-xs text-gray-500">Subtitles</p>
+                  <p className="text-xs text-gray-500">Subtítulos</p>
                   <p className="text-sm font-mono text-gray-300">{subtitles.length}</p>
                 </div>
               </div>
@@ -214,43 +218,43 @@ export default function App() {
                 <button
                   onClick={handleAddSubtitle}
                   disabled={!videoUrl}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-700 disabled:text-gray-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
+                  className="bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5"
                 >
                   <i className="fas fa-plus"></i>
-                  Add at {formatTime(currentTime).slice(0, 8)}
+                  Añadir en {formatTime(currentTime).slice(0, 8)}
                 </button>
               </div>
             </div>
 
             {/* Quick help */}
-            <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-800">
                 <div className="flex items-center gap-2 mb-1">
                   <i className="fas fa-upload text-indigo-400 text-xs"></i>
-                  <span className="text-xs text-gray-400">1. Upload Video</span>
+                  <span className="text-xs text-gray-400">1. Subir Video</span>
                 </div>
-                <p className="text-xs text-gray-500">Load your video file</p>
+                <p className="text-xs text-gray-500">Carga tu archivo de video</p>
               </div>
               <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-800">
                 <div className="flex items-center gap-2 mb-1">
-                  <i className="fas fa-play text-indigo-400 text-xs"></i>
-                  <span className="text-xs text-gray-400">2. Play & Pause</span>
+                  <i className="fas fa-wand-magic-sparkles text-purple-400 text-xs"></i>
+                  <span className="text-xs text-gray-400">2. Auto IA</span>
                 </div>
-                <p className="text-xs text-gray-500">Find the right moment</p>
+                <p className="text-xs text-gray-500">Genera subtítulos con Whisper</p>
               </div>
               <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-800">
                 <div className="flex items-center gap-2 mb-1">
-                  <i className="fas fa-plus text-indigo-400 text-xs"></i>
-                  <span className="text-xs text-gray-400">3. Add Subtitles</span>
+                  <i className="fas fa-pen text-yellow-400 text-xs"></i>
+                  <span className="text-xs text-gray-400">3. Editar</span>
                 </div>
-                <p className="text-xs text-gray-500">Create subtitle entries</p>
+                <p className="text-xs text-gray-500">Ajusta tiempos y texto</p>
               </div>
               <div className="bg-gray-900/50 rounded-lg p-3 border border-gray-800">
                 <div className="flex items-center gap-2 mb-1">
-                  <i className="fas fa-download text-indigo-400 text-xs"></i>
-                  <span className="text-xs text-gray-400">4. Export</span>
+                  <i className="fas fa-download text-green-400 text-xs"></i>
+                  <span className="text-xs text-gray-400">4. Exportar</span>
                 </div>
-                <p className="text-xs text-gray-500">Download SRT or VTT</p>
+                <p className="text-xs text-gray-500">Descarga SRT o VTT</p>
               </div>
             </div>
           </div>
